@@ -106,24 +106,36 @@ int  main(void)
     /* HW1 allocate existing types*/
     Task_STK = malloc(TASK_NUMBER * sizeof(OS_STK*));           /* open an array to put task stack */
 
+    if (Task_STK == NULL) {
+        fprintf(stderr, "Cannot allocate task stacks\n");
+        return EXIT_FAILURE;
+    }
     /* for each pointer, allocate storage for an array of OS_STK */
     int n;
     for (n = 0; n < TASK_NUMBER; n++) {
         Task_STK[n] = malloc(TASK_STACKSIZE * sizeof(OS_STK));   /* each task has their own stack */
+        if (Task_STK[n] == NULL) {
+            fprintf(stderr, "Cannot allocate task stack %d\n", n);
+            return EXIT_FAILURE;
+        }
     }
     /*Creat Task Set*/
     for (int i = 0; i < TASK_NUMBER; i++) {
-        OSTaskCreateExt(
+        INT8U err = OSTaskCreateExt(
             task_general,                                 
             &TaskParameter[i],                            
             &Task_STK[i][TASK_STACKSIZE - 1],             /* stack top */
-            TaskParameter[i].TaskPriority,
+            (INT8U)TaskParameter[i].TaskPriority,
             TaskParameter[i].TaskID,
             &Task_STK[i][0],                              /* stack bottom */
             TASK_STACKSIZE,
             &TaskParameter[i],
             (OS_TASK_OPT_STK_CHK | OS_TASK_OPT_STK_CLR)
         );
+        if (err != OS_ERR_NONE) {
+            fprintf(stderr, "Cannot create task %u (error %u)\n", TaskParameter[i].TaskID, err);
+            return EXIT_FAILURE;
+        }
     }
 /*
     OSTaskCreateExt( StartupTask,                               /* Create the startup task                
@@ -152,17 +164,19 @@ int  main(void)
 }
 void task_general(void* p_arg) {
     task_para_set* task_data = (task_para_set*)p_arg;
+    INT32U last_tick = (INT32U)-1;
+    OS_CPU_SR cpu_sr = 0u;
 
     while (1)
     {
-        /* HW1 required format, task_data. */
-        printf("%d\ttask(%2d) is running\n", OSTimeGet(), task_data->TaskID);
-        if ((Output_err = fopen_s(&Output_fp, OUTPUT_FILE_NAME, "a")) == 0)
-        {
-            fprintf(Output_fp, "%d\ttask(%2d) is running\n", OSTimeGet(), task_data->TaskID);
-            fclose(Output_fp);
+        /* PA1: execution is charged by OSTimeTick; print once per scheduled tick. */
+        OS_ENTER_CRITICAL();
+        if (last_tick != OSTime && OSTCBCur->OSTCBRemaining > 0) {
+            last_tick = OSTime;
+            PA1_Log("%u\ttask(%2d) is running\n", OSTime, task_data->TaskID);
+            OSPA1TaskLogged();
         }
-        OSTimeDly(task_data->TaskPeriodic);
+        OS_EXIT_CRITICAL();
     }
 }
 

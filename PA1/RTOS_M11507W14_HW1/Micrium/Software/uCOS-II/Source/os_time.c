@@ -55,9 +55,6 @@
 void  OSTimeDly (INT32U ticks)
 {
     INT8U      y;
-    /* HW1 */
-    OS_PRIO    grp_before;
-    OS_PRIO    tbl_before;
 #if OS_CRITICAL_METHOD == 3u                     /* Allocate storage for CPU status register           */
     OS_CPU_SR  cpu_sr = 0u;
 #endif
@@ -73,23 +70,10 @@ void  OSTimeDly (INT32U ticks)
     if (ticks > 0u) {                            /* 0 means no delay!                                  */
         OS_ENTER_CRITICAL();
         y            =  OSTCBCur->OSTCBY;        /* Delay current task                                 */
-        /* HW1 snapshot ready bits before putting the task to sleep */
-        grp_before = OSRdyGrp;
-        tbl_before = OSRdyTbl[y];
         OSRdyTbl[y] &= (OS_PRIO)~OSTCBCur->OSTCBBitX;
         OS_TRACE_TASK_SUSPENDED(OSTCBCur);
         if (OSRdyTbl[y] == 0u) {
             OSRdyGrp &= (OS_PRIO)~OSTCBCur->OSTCBBitY;
-        }
-        /* HW1 output */
-        printf("%d\twaiting prio(%2d)\t", OSTimeGet(), OSTCBCur->OSTCBPrio);
-        printf("osrdygrp(0x%02X)(0x%02X)\t", grp_before, OSRdyGrp);
-        printf("osrdytbl(0x%02X)(0x%02X)\n", tbl_before, OSRdyTbl[y]);
-        if ((Output_err = fopen_s(&Output_fp, OUTPUT_FILE_NAME, "a")) == 0) {
-            fprintf(Output_fp, "%d\twaiting prio(%2d)\t", OSTimeGet(), OSTCBCur->OSTCBPrio);
-            fprintf(Output_fp, "osrdygrp(0x%02X)(0x%02X)\t", grp_before, OSRdyGrp);
-            fprintf(Output_fp, "osrdytbl(0x%02X)(0x%02X)\n", tbl_before, OSRdyTbl[y]);
-            fclose(Output_fp);
         }
         OSTCBCur->OSTCBDly = ticks;              /* Load ticks in TCB                                  */
         OS_TRACE_TASK_DLY(ticks);

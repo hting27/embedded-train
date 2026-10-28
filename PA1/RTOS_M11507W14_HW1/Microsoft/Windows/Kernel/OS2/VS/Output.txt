@@ -1,61 +1,34 @@
-0	**************	task( 1)( 0)	0
 0	task( 1) is running
-0	waiting prio( 1)	osrdygrp(0x81)(0x81)	osrdytbl(0x06)(0x04)
-0	task( 1)( 0)	task( 2)( 0)	0
-0	task( 2) is running
-0	waiting prio( 2)	osrdygrp(0x81)(0x80)	osrdytbl(0x04)(0x00)
-0	task( 2)( 0)	task(63)	1
-4	ready   prio( 1)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x02)
-4	task(63)	task( 1)( 1)	2
+1	Completion	task( 1)( 0)	task( 2)( 0)	1	0	0
+1	task( 2) is running
+2	Completion	task( 2)( 0)	task(63)	2	0	0
+4	Preemption	task(63)	task( 1)( 1)
 4	task( 1) is running
-4	waiting prio( 1)	osrdygrp(0x81)(0x80)	osrdytbl(0x02)(0x00)
-4	task( 1)( 1)	task(63)	3
-7	ready   prio( 2)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x04)
-7	task(63)	task( 2)( 1)	4
+5	Completion	task( 1)( 1)	task(63)	1	0	0
+7	Preemption	task(63)	task( 2)( 1)
 7	task( 2) is running
-7	waiting prio( 2)	osrdygrp(0x81)(0x80)	osrdytbl(0x04)(0x00)
-7	task( 2)( 1)	task(63)	5
-8	ready   prio( 1)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x02)
-8	task(63)	task( 1)( 2)	6
+8	Completion	task( 2)( 1)	task( 1)( 2)	1	0	0
 8	task( 1) is running
-8	waiting prio( 1)	osrdygrp(0x81)(0x80)	osrdytbl(0x02)(0x00)
-8	task( 1)( 2)	task(63)	7
-12	ready   prio( 1)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x02)
-12	task(63)	task( 1)( 3)	8
+9	Completion	task( 1)( 2)	task(63)	1	0	0
+12	Preemption	task(63)	task( 1)( 3)
 12	task( 1) is running
-12	waiting prio( 1)	osrdygrp(0x81)(0x80)	osrdytbl(0x02)(0x00)
-12	task( 1)( 3)	task(63)	9
-14	ready   prio( 2)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x04)
-14	task(63)	task( 2)( 2)	10
+13	Completion	task( 1)( 3)	task(63)	1	0	0
+14	Preemption	task(63)	task( 2)( 2)
 14	task( 2) is running
-14	waiting prio( 2)	osrdygrp(0x81)(0x80)	osrdytbl(0x04)(0x00)
-14	task( 2)( 2)	task(63)	11
-16	ready   prio( 1)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x02)
-16	task(63)	task( 1)( 4)	12
+15	Completion	task( 2)( 2)	task(63)	1	0	0
+16	Preemption	task(63)	task( 1)( 4)
 16	task( 1) is running
-16	waiting prio( 1)	osrdygrp(0x81)(0x80)	osrdytbl(0x02)(0x00)
-16	task( 1)( 4)	task(63)	13
-20	ready   prio( 1)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x02)
-20	task(63)	task( 1)( 5)	14
+17	Completion	task( 1)( 4)	task(63)	1	0	0
+20	Preemption	task(63)	task( 1)( 5)
 20	task( 1) is running
-20	waiting prio( 1)	osrdygrp(0x81)(0x80)	osrdytbl(0x02)(0x00)
-20	task( 1)( 5)	task(63)	15
-21	ready   prio( 2)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x04)
-21	task(63)	task( 2)( 3)	16
+21	Completion	task( 1)( 5)	task( 2)( 3)	1	0	0
 21	task( 2) is running
-21	waiting prio( 2)	osrdygrp(0x81)(0x80)	osrdytbl(0x04)(0x00)
-21	task( 2)( 3)	task(63)	17
-24	ready   prio( 1)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x02)
-24	task(63)	task( 1)( 6)	18
+22	Completion	task( 2)( 3)	task(63)	1	0	0
+24	Preemption	task(63)	task( 1)( 6)
 24	task( 1) is running
-24	waiting prio( 1)	osrdygrp(0x81)(0x80)	osrdytbl(0x02)(0x00)
-24	task( 1)( 6)	task(63)	19
-28	ready   prio( 2)	osrdygrp(0x80)(0x81)	osrdytbl(0x00)(0x04)
-28	ready   prio( 1)	osrdygrp(0x81)(0x81)	osrdytbl(0x04)(0x06)
-28	task(63)	task( 1)( 7)	20
+25	Completion	task( 1)( 6)	task(63)	1	0	0
+28	Preemption	task(63)	task( 1)( 7)
 28	task( 1) is running
-28	waiting prio( 1)	osrdygrp(0x81)(0x81)	osrdytbl(0x06)(0x04)
-28	task( 1)( 7)	task( 2)( 4)	21
-28	task( 2) is running
-28	waiting prio( 2)	osrdygrp(0x81)(0x80)	osrdytbl(0x04)(0x00)
-28	task( 2)( 4)	task(63)	22
+29	Completion	task( 1)( 7)	task( 2)( 4)	1	0	0
+29	task( 2) is running
+30	Completion	task( 2)( 4)	task(63)	2	0	0

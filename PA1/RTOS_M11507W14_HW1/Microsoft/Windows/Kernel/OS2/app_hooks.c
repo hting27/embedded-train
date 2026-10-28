@@ -36,6 +36,9 @@
 */
 
 #include  <os.h>
+#include  <stdarg.h>
+#include  <errno.h>
+#include  <stdlib.h>
 
 
 /*
@@ -88,71 +91,122 @@
 *********************************************************************************************************
 */
 
-void OutFileInit() {
-    /*Clear the file*/
-    if ((Output_err = fopen_s(&Output_fp, OUTPUT_FILE_NAME, "w")) == 0)
-        fclose(Output_fp);
-    else
-        printf("Error to clear output file");
+/* PA1: keep console/file I/O outside the tick path. */
+static char PA1_Output[256 * (SYSTEM_END_TIME + 1) * (OS_MAX_TASKS + 3)];
+static size_t PA1_OutputUsed;
+
+void PA1_Log(const char *format, ...)
+{
+    va_list args;
+    int length;
+
+    va_start(args, format);
+    length = vsnprintf(PA1_Output + PA1_OutputUsed,
+                       sizeof(PA1_Output) - PA1_OutputUsed, format, args);
+    va_end(args);
+    if (length < 0 || (size_t)length >= sizeof(PA1_Output) - PA1_OutputUsed) {
+        fprintf(stderr, "PA1 output buffer exhausted\n");
+        exit(EXIT_FAILURE);
+    }
+    PA1_OutputUsed += (size_t)length;
 }
 
-void InputFile() {
+void PA1_Finish(void)
+{
+    if (fwrite(PA1_Output, 1, PA1_OutputUsed, Output_fp) != PA1_OutputUsed ||
+        fclose(Output_fp) != 0) {
+        fprintf(stderr, "Cannot write Output.txt\n");
+        exit(EXIT_FAILURE);
+    }
+    fwrite(PA1_Output, 1, PA1_OutputUsed, stdout);
+    exit(EXIT_SUCCESS);
+}
+
+void OutFileInit(void) {
+    /*Clear the file*/
+    Output_err = fopen_s(&Output_fp, OUTPUT_FILE_NAME, "w");
+    if (Output_err != 0) {
+        fprintf(stderr, "Error to clear output file\n");
+        exit(EXIT_FAILURE);
+    }
+    PA1_OutputUsed = 0;
+}
+
+void InputFile(void) {
     /*
      * Read File
      * Task Information:
      * Task_ID ArriveTime ExecutionTime Periodic
      */
     errno_t err;
+    char str[256];
+    char *ptr, *end;
+    long TaskInfo[INFO];
+    int i, j, line = 0;
+
     if ((err = fopen_s(&fp, INPUT_FILE_NAME, "r")) == 0)     /*task set 1-4*/
     {
         printf("The file 'TaskSet.txt' was opened\n");
     }
     else
     {
-        printf("The file 'TaskSet.txt' was not opened\n");
+        fprintf(stderr, "The file 'TaskSet.txt' was not opened\n");
+        exit(EXIT_FAILURE);
     }
 
-    char str[MAX];
-    char* ptr;
-    char* pTmp = NULL;
-    int TaskInfo[INFO], i, j = 0;
     TASK_NUMBER = 0;
-    while (!feof(fp))
+    while (fgets(str, sizeof(str), fp) != NULL)
     {
-        i = 0;
-        memset(str, 0, sizeof(str));
-        fgets(str, sizeof(str) - 1, fp);
-        ptr = strtok_s(str, " ", &pTmp);
-        while (ptr != NULL)
-        {
-            TaskInfo[i] = atoi(ptr);
-            ptr = strtok_s(NULL, " ", &pTmp);
-            /*printf("Info: %d\n", task_inf[i]);*/
-            if (i == 0) {
-                TASK_NUMBER++;
-                TaskParameter[j].TaskID = TASK_NUMBER;
-            }
-            else if (i == 1) {
-                TaskParameter[j].TaskArriveTime = TaskInfo[i];
-            }
-            else if (i == 2) {
-                TaskParameter[j].TaskExecutionTime = TaskInfo[i];
-            }
-            else if (i == 3) {
-                TaskParameter[j].TaskPeriodic = TaskInfo[i];
-            }
-
-            i++;
+        line++;
+        ptr = str;
+        while (*ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n') ptr++;
+        if (*ptr == '\0') continue;
+        if (TASK_NUMBER >= OS_MAX_TASKS) goto invalid;
+        for (i = 0; i < INFO; i++) {
+            errno = 0;
+            TaskInfo[i] = strtol(ptr, &end, 10);
+            if (end == ptr || errno == ERANGE || TaskInfo[i] < 0 || TaskInfo[i] > 65535)
+                goto invalid;
+            if (*end != '\0' && *end != ' ' && *end != '\t' && *end != '\r' && *end != '\n')
+                goto invalid;
+            ptr = end;
         }
-
-        /*Initial Priority*/
-        TaskParameter[j].TaskPriority = j + 1;
-        /* HW1 priority 1 for task1 and priority 2 for task2 */
-
-        j++;
+        while (*ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n') ptr++;
+        if (*ptr != '\0' || TaskInfo[0] >= 65533 || TaskInfo[2] == 0 || TaskInfo[3] == 0)
+            goto invalid;
+        for (j = 0; j < TASK_NUMBER; j++) {
+            if (TaskParameter[j].TaskID == TaskInfo[0]) goto invalid;
+        }
+        j = TASK_NUMBER++;
+        TaskParameter[j].TaskID = (INT16U)TaskInfo[0];
+        TaskParameter[j].TaskArriveTime = (INT16U)TaskInfo[1];
+        TaskParameter[j].TaskExecutionTime = (INT16U)TaskInfo[2];
+        TaskParameter[j].TaskPeriodic = (INT16U)TaskInfo[3];
+        TaskParameter[j].TaskNumber = 0;
     }
+    if (ferror(fp) || TASK_NUMBER == 0) goto invalid;
     fclose(fp);
+
+    /*Initial Priority*/
+    /* PA1: shorter periods have higher RM priority; break ties by TaskID. */
+    for (i = 0; i < TASK_NUMBER; i++) {
+        TaskParameter[i].TaskPriority = 1;
+        for (j = 0; j < TASK_NUMBER; j++) {
+            if ((ALGORITHM == RM && TaskParameter[j].TaskPeriodic < TaskParameter[i].TaskPeriodic) ||
+                ((ALGORITHM == FIFO || TaskParameter[j].TaskPeriodic == TaskParameter[i].TaskPeriodic) &&
+                 TaskParameter[j].TaskID < TaskParameter[i].TaskID)) {
+                TaskParameter[i].TaskPriority++;
+            }
+        }
+    }
     /*read file*/
+    return;
+
+invalid:
+    fprintf(stderr, "Invalid TaskSet.txt at line %d (four integers, unique IDs, positive execution/period, at most %u tasks)\n",
+            line, (unsigned)OS_MAX_TASKS);
+    fclose(fp);
+    exit(EXIT_FAILURE);
 }
 
 /*

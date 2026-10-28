@@ -83,6 +83,7 @@ void         OSCtxSw   (void);
 void         OSIntCtxSw(void);
 
 void         OSStartHighRdy(void);
+void         OSPA1TaskLogged(void);
 
 CPU_BOOLEAN  OSIntCurTaskSuspend(void);
 CPU_BOOLEAN  OSIntCurTaskResume (void);

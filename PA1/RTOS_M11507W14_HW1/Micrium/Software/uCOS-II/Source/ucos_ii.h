@@ -66,9 +66,28 @@ extern "C" {
 
 /*End time for the simulation*/
 #define SYSTEM_END_TIME 30
+#define RM 0
+#define FIFO 1
+#ifndef ALGORITHM
+#define ALGORITHM RM
+#endif
+#if (ALGORITHM != RM) && (ALGORITHM != FIFO)
+#error "ALGORITHM must be RM or FIFO"
+#endif
+
+#ifdef OS_GLOBALS
+#define PA1_EXT
+#else
+#define PA1_EXT extern
+#endif
+
+void OutFileInit(void);
+void InputFile(void);
+void PA1_Log(const char *format, ...);
+void PA1_Finish(void);
 
  /*Input File*/
- FILE* fp;
+ PA1_EXT FILE* fp;
 #define INPUT_FILE_NAME "./TaskSet.txt"
 #define OUTPUT_FILE_NAME "./Output.txt"
 #define MAX 20                  //Task maximum number
@@ -76,8 +95,8 @@ extern "C" {
  /*Input File*/
 
  /*Output file*/
- FILE* Output_fp;
- errno_t Output_err;
+ PA1_EXT FILE* Output_fp;
+ PA1_EXT errno_t Output_err;
  /*Output file*/
  
  /*Task structure */
@@ -90,9 +109,9 @@ extern "C" {
      INT16U TaskPriority;
  }task_para_set;
 
- int TASK_NUMBER;
- OS_STK** Task_STK;
- task_para_set TaskParameter[OS_MAX_TASKS];
+ PA1_EXT int TASK_NUMBER;
+ PA1_EXT OS_STK** Task_STK;
+ PA1_EXT task_para_set TaskParameter[OS_MAX_TASKS];
 
 
 #ifdef   OS_GLOBALS
@@ -650,6 +669,13 @@ typedef struct os_tcb {
 
     /******************************** HW 1 ********************************/
     INT16U           OSTCBJobNum;
+    INT32U           OSTCBRelease;
+    INT32U           OSTCBNextRelease;
+    INT32U           OSTCBRemaining;
+    INT32U           OSTCBPreemptionTime;
+    INT32U           OSTCBPreemptionCount;
+    BOOLEAN          OSTCBPeriodic;
+    BOOLEAN          OSTCBPreempted;
     /**********************************************************************/
 
 #if OS_TASK_DEL_EN > 0u

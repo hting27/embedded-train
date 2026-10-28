@@ -52,6 +52,7 @@
 #include  <windows.h>
 #include  <mmsystem.h>
 #include  <stdio.h>
+#include  <stdlib.h>
 
 
 /*$PAGE*/
@@ -137,6 +138,7 @@ static  INT16U    OSTmrCtr;
 #endif                                                                  /* #if (OS_VERSION >= 281) && (OS_TMR_EN > 0)               */
 
 static  HANDLE    OSTerminate_SignalPtr;
+static  HANDLE    OSPA1_RunSignalPtr;
 
 static  HANDLE    OSTick_Thread;
 static  DWORD     OSTick_ThreadId;
@@ -687,6 +689,12 @@ void  OSStartHighRdy (void)
     CPU_SR_ALLOC();
 
 
+    /* PA1: acknowledge task-level output before the next emulated tick. */
+    OSPA1_RunSignalPtr = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (OSPA1_RunSignalPtr == NULL) {
+        fprintf(stderr, "Cannot create PA1 task acknowledgement event\n");
+        exit(EXIT_FAILURE);
+    }
     OSTaskSwHook();
     OSRunning = 1;
 
@@ -695,6 +703,9 @@ void  OSStartHighRdy (void)
     ResumeThread(p_stk->ThreadHandle);
                                                                         /* Wait while task is created and until it is ready to run. */
     SignalObjectAndWait(p_stk->SignalPtr, p_stk->InitSignalPtr, INFINITE, FALSE);
+    if (OSTCBHighRdy->OSTCBPeriodic) {
+        WaitForSingleObject(OSPA1_RunSignalPtr, INFINITE);
+    }
     ResumeThread(OSTick_Thread);                                        /* Start OSTick Thread.                                     */
     WaitForSingleObject(OSTick_Thread, INFINITE);                       /* Wait until OSTick Thread has terminated.                 */
 
@@ -707,6 +718,7 @@ void  OSStartHighRdy (void)
 
     CloseHandle(OSTick_Thread);
     CloseHandle(OSTerminate_SignalPtr);
+    CloseHandle(OSPA1_RunSignalPtr);
 
 
 #if (OS_MSG_TRACE > 0u)
@@ -1142,6 +1154,11 @@ CPU_BOOLEAN  OSIntCurTaskResume (void)
 *********************************************************************************************************
 */
 
+void OSPA1TaskLogged(void)
+{
+    SetEvent(OSPA1_RunSignalPtr);
+}
+
 static  DWORD  WINAPI  OSTickW32 (LPVOID  p_arg)
 {
     CPU_BOOLEAN  terminate;
@@ -1181,6 +1198,9 @@ static  DWORD  WINAPI  OSTickW32 (LPVOID  p_arg)
                  }
 
                  CPU_CRITICAL_EXIT();
+                 if (suspended && OSTCBCur->OSTCBPeriodic) {
+                     WaitForSingleObject(OSPA1_RunSignalPtr, INFINITE);
+                 }
                  break;
 
 
