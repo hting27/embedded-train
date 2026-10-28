@@ -1,0 +1,23 @@
+0	task( 1) is running
+1	Preemption	task( 1)( 0)	task( 2)( 0)
+1	task( 2) is running
+2	task( 2) is running
+3	Completion	task( 2)( 0)	task( 1)( 0)	2	0	0
+3	task( 1) is running
+4	task( 1) is running
+5	Completion	task( 1)( 0)	task( 3)( 0)	5	2	1
+5	task( 3) is running
+6	task( 3) is running
+7	Preemption	task( 3)( 0)	task( 2)( 1)
+7	task( 2) is running
+8	task( 2) is running
+9	Completion	task( 2)( 1)	task( 1)( 1)	2	0	0
+9	task( 1) is running
+10	task( 1) is running
+11	task( 1) is running
+12	Completion	task( 1)( 1)	task( 3)( 0)	4	0	0
+12	task( 3) is running
+13	Preemption	task( 3)( 0)	task( 2)( 2)
+13	task( 2) is running
+14	task( 2) is running
+15	MissDeadline	task( 3)( 0)	-------------------
